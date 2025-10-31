@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>생태·환경 퀴즈 — 모던 웹앱</title>
+<style>
+  :root{
+    --bg1:#0f1724; /* deep navy */
+    --bg2:#0b1220;
+    --accent1:#2dd4bf; /* teal */
+    --accent2:#7c3aed; /* purple */
+    --glass: rgba(255,255,255,0.06);
+    --glass-2: rgba(255,255,255,0.04);
+    --text:#e6eef8;
+    --muted:#9fb0c8;
+    --success:#22c55e;
+    --danger:#ef4444;
+    --card-radius:16px;
+    --card-padding:28px;
+    font-family: "Inter", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+
+  *{box-sizing:border-box}
+  html,body,#app{height:100%}
+  body{
+    margin:0;
+    background: radial-gradient(1200px 700px at 15% 20%, rgba(124,58,237,0.12), transparent),
+                radial-gradient(900px 500px at 85% 80%, rgba(45,212,191,0.06), transparent),
+                linear-gradient(180deg,var(--bg1),var(--bg2));
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+
+  /* App container */
+  .container{
+    width:100%;
+    max-width:1100px;
+    height:100%;
+    max-height:820px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:20px;
+    padding:24px;
+    box-shadow: 0 10px 40px rgba(2,6,23,0.6);
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    overflow:hidden;
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .logo{
+    width:56px;
+    height:56px;
+    border-radius:12px;
+    background: linear-gradient(135deg,var(--accent1),var(--accent2));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    color:white;
+    font-size:22px;
+    box-shadow: 0 6px 18px rgba(124,58,237,0.18), inset 0 -6px 16px rgba(0,0,0,0.12);
+  }
+
+  .title{
+    line-height:1;
+  }
+  .title h1{font-size:18px;margin:0}
+  .title p{font-size:12px;margin:0;color:var(--muted)}
+
+  .controls{
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+
+  button.btn{
+    background:var(--glass);
+    border:1px solid rgba(255,255,255,0.04);
+    color:var(--text);
+    padding:10px 14px;
+    font-weight:600;
+    border-radius:12px;
+    cursor:pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  button.btn:active{transform:translateY(1px)}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+  button.primary{
+    background:linear-gradient(90deg,var(--accent1),var(--accent2));
+    box-shadow: 0 8px 20px rgba(124,58,237,0.12);
+    border:none;
+  }
+
+  /* main quiz area */
+  main{
+    flex:1;
+    display:flex;
+    gap:18px;
+    align-items:stretch;
+    min-height:0; /* for flex children overflow */
+  }
+
+  /* left: question card */
+  .card{
+    flex: 2 1 0%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:var(--card-radius);
+    padding:var(--card-padding);
+    backdrop-filter: blur(8px) saturate(110%);
+    border: 1px solid rgba(255,255,255,0.03);
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    overflow:auto;
+  }
+
+  .meta{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .progress-wrap{flex:1;margin-left:12px}
+  .progress{
+    width:100%;
+    height:10px;
+    background:var(--glass-2);
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .progress > i{
+    display:block;
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,var(--accent1),var(--accent2));
+    transition: width .45s cubic-bezier(.2,.9,.25,1);
+  }
+  .q-number{font-weight:700;color:var(--muted);font-size:13px}
+
+  .question{
+    font-size:20px;
+    line-height:1.4;
+    font-weight:600;
+  }
+  .hint{
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .choices{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  .choice{
+    padding:14px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.04);
+    background:rgba(255,255,255,0.02);
+    cursor:pointer;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    user-select:none;
+  }
+  .choice:hover{transform:translateY(-4px); box-shadow:0 12px 30px rgba(2,6,23,0.45)}
+  .choice.selected{border-color:rgba(125,211,252,0.28); box-shadow:0 8px 26px rgba(45,212,191,0.06)}
+  .choice.correct{background:linear-gradient(180deg, rgba(34,197,94,0.12), rgba(34,197,94,0.06)); border-color:rgba(34,197,94,0.16)}
+  .choice.wrong{background:linear-gradient(180deg, rgba(239,68,68,0.08), rgba(239,68,68,0.03)); border-color:rgba(239,68,68,0.14); opacity:0.95}
+
+  /* right: stats panel */
+  .panel{
+    flex: 0 0 320px;
+    min-width:260px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006));
+    border-radius:var(--card-radius);
+    padding:18px;
+    border:1px solid rgba(255,255,255,0.03);
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .panel h3{margin:0;font-size:14px;color:var(--muted)}
+  .stat{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px;
+    border-radius:10px;
+    background:rgba(255,255,255,0.01);
+    border:1px solid rgba(255,255,255,0.02);
+  }
+  .big{
+    font-size:22px;
+    font-weight:700;
+  }
+
+  footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  /* result modal (simple) */
+  .modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:120;
+  }
+  .modal.show{display:flex}
+  .overlay{
+    position:absolute;inset:0;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.8));
+    backdrop-filter: blur(6px);
+  }
+  .modal-card{
+    position:relative;
+    width:min(720px,94%);
+    border-radius:16px;
+    padding:24px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.04);
+    box-shadow: 0 20px 60px rgba(2,6,23,0.7);
+    z-index:10;
+  }
+  .summary{
+    display:flex;
+    gap:16px;
+    align-items:center;
+  }
+  .badge{
+    width:96px;height:96px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;
+    background:linear-gradient(135deg,var(--accent2),var(--accent1));
+    color:white;
+  }
+  .summary .meta{flex-direction:column;align-items:flex-start}
+  .review-list{margin-top:14px;max-height:320px;overflow:auto;padding-right:10px}
+  .review-item{padding:10px;border-radius:10px;margin-bottom:8px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)}
+  .correct-answer{color:var(--success);font-weight:700}
+  .wrong-answer{color:var(--danger);font-weight:700}
+
+  /* responsive */
+  @media (max-width:880px){
+    main{flex-direction:column}
+    .panel{order:2;flex:unset;width:100%}
+    .card{order:1}
+    .choices{grid-template-columns:1fr}
+    .controls{flex-wrap:wrap}
+  }
+
+  /* small keyboard hint */
+  .kbd-hint{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center}
+  .kbd{padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);font-weight:700;}
+</style>
+</head>
+<body>
+<div id="app" class="app-root">
+  <div class="container" role="application" aria-labelledby="appTitle">
+    <header>
+      <div class="brand" id="appTitle">
+        <div class="logo">E</div>
+        <div class="title">
+          <h1>생태 · 환경 퀴즈</h1>
+          <p>중상급 — 생태학 / 환경과학 핵심 개념 10문제</p>
+        </div>
+      </div>
+
+      <div class="controls" aria-hidden="false">
+        <div class="kbd-hint">
+          <span class="kbd">←</span><span class="kbd">→</span>로 이동
+        </div>
+        <button class="btn ghost" id="btn-review">정답 보기</button>
+        <button class="btn primary" id="btn-restart">다시하기</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" aria-live="polite">
+        <div class="meta">
+          <div class="q-number" id="qNum">문제 1 / 10</div>
+          <div class="progress-wrap" aria-hidden="true">
+            <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+          </div>
+          <div style="width:120px;text-align:right;color:var(--muted);font-size:13px" id="timerArea">시간: <span id="timer">--:--</span></div>
+        </div>
+
+        <div>
+          <div class="question" id="questionText">질문이 여기 표시됩니다.</div>
+          <div class="hint" id="questionHint">힌트가 있으면 표시</div>
+        </div>
+
+        <div class="choices" id="choicesContainer" role="list">
+          <!-- choices injected here -->
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center;justify-content:space-between">
+          <div style="color:var(--muted);font-size:13px">선택 후 자동으로 다음 문제로 넘어갑니다.</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" id="prevBtn" aria-label="Previous question">이전</button>
+            <button class="btn" id="nextBtn" aria-label="Next question">다음</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel" aria-hidden="false">
+        <h3>진행 상황</h3>
+        <div class="stat">
+          <div>점수</div>
+          <div class="big" id="score">0</div>
+        </div>
+        <div class="stat">
+          <div>맞은 문제</div>
+          <div id="correctCount">0</div>
+        </div>
+        <div class="stat">
+          <div>남은 문제</div>
+          <div id="remaining">10</div>
+        </div>
+
+        <h3 style="margin-top:6px">설정</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="font-size:13px;color:var(--muted)">
+            타이머 (문제당): 
+            <select id="timePerQ" style="margin-left:8px;padding:6px;border-radius:8px;background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.04)">
+              <option value="0">없음</option>
+              <option value="30">30초</option>
+              <option value="45" selected>45초</option>
+              <option value="60">60초</option>
+            </select>
+          </label>
+          <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="autoNext" checked> 자동 다음</label>
+        </div>
+
+        <div style="margin-top:auto">
+          <h3>키보드</h3>
+          <div style="font-size:13px;color:var(--muted)">
+            숫자 1–4: 선택 · ←·→: 문제 이동 · R: 다시하기 · V: 정답 보기
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <div style="color:var(--muted);font-size:13px">문제: 생태계 구조 · 물질 순환 · 보전 · 영향 분석 중심</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" id="btn-help">문제 설명</button>
+        <button class="btn primary" id="btn-submit">제출하기</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- result modal -->
+  <div class="modal" id="resultModal" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="overlay"></div>
+    <div class="modal-card" role="document">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <h2 id="resultTitle" style="margin:0">결과</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn ghost" id="modal-close">닫기</button>
+          <button class="btn primary" id="modal-restart">다시하기</button>
+        </div>
+      </div>
+
+      <div class="summary" style="margin-top:18px">
+        <div class="badge" id="scoreBadge">0/10</div>
+        <div class="meta">
+          <div style="font-weight:800;font-size:18px" id="scoreText">점수: 0</div>
+          <div style="color:var(--muted)" id="scoreDetail">맞음: 0 | 틀림: 0</div>
+        </div>
+      </div>
+
+      <div class="review-list" id="reviewList">
+        <!-- per-question review -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  Ecology & Environment Quiz App
+  - 10 questions (중상급)
+  - Self-contained: questions array below. Each item: {q, hint, choices[], correctIndex, explanation}
+*/
+
+const QUESTIONS = [
+  {
+    q: "1) 생태계에서 '기초생산자(primary producers)'가 차지하는 기능으로 옳은 것은?",
+    hint: "태양에너지 → 화학에너지로 전환",
+    choices: [
+      "무기물의 분해 및 영양염 재순환",
+      "광합성 또는 화학합성으로 유기물 생산",
+      "먹이사슬에서 최상위포식자로 에너지를 축적",
+      "생물다양성을 유지하는 핵심종 역할만 수행"
+    ],
+    correctIndex: 1,
+    explanation: "기초생산자는 광합성을 하거나 화학합성으로 유기물을 만들어 생태계 에너지 입력을 담당한다."
+  },
+  {
+    q: "2) 부영양화(eutrophication)의 주요 원인으로 옳지 않은 것은?",
+    hint: "영양염 과다 → 녹조 발생",
+    choices: [
+      "농업에서 질소·인 비료의 유출",
+      "도시 하수의 영양염 방출",
+      "연안에서의 과도한 어획",
+      "하천 유입으로 인한 영양염 축적"
+    ],
+    correctIndex: 2,
+    explanation: "과도한 어획은 부영양화의 직접적 원인이 아니다. 부영양화는 주로 질소·인 등의 영양염 과다 유입으로 발생한다."
+  },
+  {
+    q: "3) '핵심종(keystone species)' 개념으로 옳은 설명은?",
+    hint: "개체 수는 적어도 영향이 큼",
+    choices: [
+      "군집의 종다양성에 거의 영향이 없다",
+      "수분·분해와 같은 기본기능만 수행",
+      "비교적 적은 개체수로도 군집 구조와 기능을 크게 좌우",
+      "항상 먹이사슬의 최상위 포식자이다"
+    ],
+    correctIndex: 2,
+    explanation: "핵심종은 개체수는 적을 수 있으나 생태계 구조에 큰 영향을 미친다. 반드시 최상위 포식자일 필요는 없다."
+  },
+  {
+    q: "4) 탄소 격리(carbon sequestration) 방식으로 틀린 것은?",
+    hint: "빠른 제거가 아닌 장기 저장",
+    choices: [
+      "보전되는 열대우림의 탄소 흡수",
+      "습지(토탄지)의 장기 유기물 축적",
+      "해양 표층 플랑크톤의 호흡 증가로 인한 CO₂ 방출 촉진",
+      "탄소 포집 및 지중 저장(CCS)"
+    ],
+    correctIndex: 2,
+    explanation: "해양 표층 플랑크톤의 호흡 증가는 CO₂ 방출을 촉진할 수 있어 격리가 아니다; 다른 선택지는 격리 방식이다."
+  },
+  {
+    q: "5) '경계 효과(edge effect)'의 생태학적 결과로 가장 적절한 것은?",
+    hint: "서로 다른 서식지 접촉부",
+    choices: [
+      "경계 구역에서는 종다양성이 항상 줄어든다",
+      "경계는 에지특화종을 유리하게 하여 지역적 다양성을 높일 수 있다",
+      "경계 지역은 포식자 활동이 항상 감소한다",
+      "경계 효과는 사람 활동과 무관하다"
+    ],
+    correctIndex: 1,
+    explanation: "경계는 일부 경우 종다양성을 높이며 에지특화종에 유리하지만, 포식자 활동 증가 등 복합적 결과가 나타난다."
+  },
+  {
+    q: "6) '영향력 있는 생태계 서비스'에 속하지 않는 것은?",
+    hint: "생태계 서비스: 공급, 조절, 문화, 지지",
+    choices: [
+      "농산물과 임산물의 생산",
+      "대기 조절 및 기후 규제",
+      "도시의 상징적 건축물 보존",
+      "수분 매개와 토양 비옥도 유지"
+    ],
+    correctIndex: 2,
+    explanation: "상징적 건축물 보존은 문화적 가치와 연관되나 생태계 서비스의 범주인 '자연이 제공하는 기능'과는 다르다."
+  },
+  {
+    q: "7) 섬 생물지리학(island biogeography) 이론에서 '섬의 면적이 작고 고립도가 높을수록' 기대되는 현상은?",
+    hint: "면적·격리도 ⇒ 종수 결정",
+    choices: [
+      "종의 멸종률 감소와 종수 증가",
+      "종의 도착률 증가",
+      "종다양성 감소와 멸종률 증가",
+      "서식지 파편화가 감소"
+    ],
+    correctIndex: 2,
+    explanation: "작고 고립된 섬은 도착률이 낮고 멸종률이 높아 결과적으로 종다양성이 낮아진다."
+  },
+  {
+    q: "8) '영양피라미드(trophic pyramid)'에서 에너지 전이 효율이 보통 낮은 주요 이유는?",
+    hint: "흡수·호흡·배설 등 손실",
+    choices: [
+      "포식자의 먹이 선택이 비효율적이라서",
+      "에너지가 다음 영양단계로 전부 전달되지 않고 대부분 열로 손실되기 때문에",
+      "물질이 영양단계를 통해 재활용되지 않기 때문에",
+      "광합성 활동이 영양피라미드 바닥에서만 발생하기 때문에"
+    ],
+    correctIndex: 1,
+    explanation: "에너지 전이는 불완전하여 생체에 고정되지 않은 에너지는 호흡·대사·배설 등으로 손실되어 효율이 낮다."
+  },
+  {
+    q: "9) 생물 다양성 감소가 생태계 기능에 미치는 영향으로 옳지 않은 것은?",
+    hint: "보상·중복성 개념",
+    choices: [
+      "일부 기능은 종 대체로 보전될 수 있다",
+      "다양성 감소는 탄소 저장·영양염 순환 능력 약화로 이어질 수 있다",
+      "어떤 기능은 종의 수와 무관하게 항상 유지된다",
+      "생태계 복원 탄력성(resilience)이 낮아질 수 있다"
+    ],
+    correctIndex: 2,
+    explanation: "모든 기능이 종 수와 무관하게 항상 유지된다는 것은 잘못된 주장이다—일부 기능은 다양성에 의존한다."
+  },
+  {
+    q: "10) '먹이그물(forage web) 붕괴'로 인한 '영양적 연쇄 효과(trophic cascade)'의 예로 적절한 것은?",
+    hint: "상위 포식자의 변화가 하위에 영향",
+    choices: [
+      "톱 포식자 감소 → 초식동물 증가 → 식생 감소",
+      "초식동물 증가 → 상위 포식자 무조건 증가",
+      "생산자 감소는 포식자 수 증가로 이어진다",
+      "영양적 연쇄효과는 항상 양성(긍정적)이다"
+    ],
+    correctIndex: 0,
+    explanation: "톱 포식자 감소는 초식동물의 과다 증가를 초래하고 식생 감소 등 연쇄적인 부정적 효과를 낳을 수 있다."
+  }
+];
+
+// --- Application state ---
+let state = {
+  index: 0,
+  answers: Array(QUESTIONS.length).fill(null), // store selected choice index or null
+  score: 0,
+  timerHandle: null,
+  timeLeft: 0
+};
+
+const el = id => document.getElementById(id);
+
+// ---- UI render ----
+function renderQuestion(idx){
+  const q = QUESTIONS[idx];
+  el('qNum').textContent = `문제 ${idx+1} / ${QUESTIONS.length}`;
+  el('questionText').textContent = q.q;
+  el('questionHint').textContent = q.hint || '';
+  // progress
+  const pct = Math.round(((idx)/QUESTIONS.length)*100);
+  el('progressBar').style.width = `${pct}%`;
+
+  // choices
+  const container = el('choicesContainer');
+  container.innerHTML = '';
+  q.choices.forEach((text, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.setAttribute('role','listitem');
+    btn.setAttribute('data-index',i);
+    btn.tabIndex = 0;
+    btn.innerHTML = `<div style="font-weight:700">(${String.fromCharCode(65+i)})</div><div style="margin-top:6px">${text}</div>`;
+    // restore selected state
+    if (state.answers[idx] === i) btn.classList.add('selected');
+    btn.addEventListener('click', () => onSelect(idx,i));
+    container.appendChild(btn);
+  });
+
+  // UI right panel
+  el('score').textContent = state.score;
+  el('correctCount').textContent = state.answers.filter((a, i) => a !== null && a === QUESTIONS[i].correctIndex).length;
+  el('remaining').textContent = QUESTIONS.length - state.answers.filter(a => a !== null).length;
+
+  // timer
+  resetTimerForQuestion();
+}
+
+function onSelect(qIdx, choiceIdx){
+  // prevent changing after final submit? allow change until submit; but when submitted, handle later
+  state.answers[qIdx] = choiceIdx;
+  // mark selection visually
+  [...el('choicesContainer').children].forEach(node=>{
+    node.classList.remove('selected','correct','wrong');
+    const idx = Number(node.getAttribute('data-index'));
+    if(idx === choiceIdx) node.classList.add('selected');
+  });
+
+  // immediate feedback reveal and scoring
+  revealAnswer(qIdx);
+
+  // if autoNext enabled, move next after short delay
+  if (el('autoNext').checked){
+    setTimeout(()=>{ goNext(); }, 700);
+  }
+}
+
+function revealAnswer(qIdx){
+  const correct = QUESTIONS[qIdx].correctIndex;
+  const container = el('choicesContainer');
+  [...container.children].forEach(node=>{
+    const idx = Number(node.getAttribute('data-index'));
+    node.classList.remove('correct','wrong');
+    if(idx === correct) node.classList.add('correct');
+    if(state.answers[qIdx] !== null && idx === state.answers[qIdx] && state.answers[qIdx] !== correct) {
+      node.classList.add('wrong');
+    }
+  });
+
+  // update score (one-time awarding)
+  // to avoid double-counting when user changes answer, recalc score from scratch
+  recalcScore();
+}
+
+function recalcScore(){
+  let s = 0;
+  for(let i=0;i<QUESTIONS.length;i++){
+    if(state.answers[i] === QUESTIONS[i].correctIndex) s += 1;
+  }
+  state.score = s;
+  el('score').textContent = state.score;
+  el('correctCount').textContent = s;
+  el('remaining').textContent = QUESTIONS.length - state.answers.filter(a => a !== null).length;
+  el('scoreBadge').textContent = `${s}/${QUESTIONS.length}`;
+  el('scoreText').textContent = `점수: ${s}`;
+  el('scoreDetail').textContent = `맞음: ${s} | 틀림: ${QUESTIONS.length - s - state.answers.filter(a=>a===null).length}`;
+}
+
+// navigation
+function goNext(){
+  if(state.index < QUESTIONS.length -1){
+    state.index++;
+    renderQuestion(state.index);
+    focusFirstChoice();
+  } else {
+    // if last, open result summary
+    openResult();
+  }
+}
+function goPrev(){
+  if(state.index > 0){
+    state.index--;
+    renderQuestion(state.index);
+    focusFirstChoice();
+  }
+}
+
+function focusFirstChoice(){
+  const c = el('choicesContainer').querySelector('.choice');
+  if(c) c.focus();
+}
+
+// --- Timer per question ---
+function resetTimerForQuestion(){
+  clearInterval(state.timerHandle);
+  const sec = Number(el('timePerQ').value);
+  if(sec > 0){
+    state.timeLeft = sec;
+    el('timer').textContent = formatTime(state.timeLeft);
+    state.timerHandle = setInterval(()=>{
+      state.timeLeft--;
+      el('timer').textContent = formatTime(state.timeLeft);
+      if(state.timeLeft <= 0){
+        clearInterval(state.timerHandle);
+        // if no selection, mark null and move on
+        if(state.answers[state.index] === null){
+          // reveal correct answer (no score)
+          revealAnswer(state.index);
+        }
+        // auto next?
+        if (el('autoNext').checked) goNext();
+      }
+    }, 1000);
+  } else {
+    el('timer').textContent = '--:--';
+  }
+}
+
+function formatTime(sec){
+  const m = Math.floor(sec/60).toString().padStart(2,'0');
+  const s = (sec%60).toString().padStart(2,'0');
+  return `${m}:${s}`;
+}
+
+// --- submit / results ---
+function openResult(){
+  recalcScore();
+  // build review list
+  const list = el('reviewList');
+  list.innerHTML = '';
+  QUESTIONS.forEach((q, i)=>{
+    const user = state.answers[i];
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    const ok = (user === q.correctIndex);
+    item.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700">문제 ${i+1}</div>
+        <div style="font-size:13px;color:${ok? 'var(--success)':'var(--danger)'}">${ok ? '정답' : '오답'}</div>
+      </div>
+      <div style="margin-top:8px">${q.q}</div>
+      <div style="margin-top:8px;color:var(--muted);font-size:13px">
+        당신: ${user===null? '<em>미응답</em>' : `(${String.fromCharCode(65+user)}) ${q.choices[user]}`}
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        정답: (${String.fromCharCode(65+q.correctIndex)}) <span class="correct-answer">${q.choices[q.correctIndex]}</span>
+      </div>
+      <div style="margin-top:8px;font-size:13px;color:var(--muted)">${q.explanation}</div>
+    `;
+    list.appendChild(item);
+  });
+
+  el('resultModal').classList.add('show');
+}
+
+// --- event listeners ---
+el('prevBtn').addEventListener('click', goPrev);
+el('nextBtn').addEventListener('click', goNext);
+el('btn-restart').addEventListener('click', resetAll);
+el('modal-restart').addEventListener('click', () => { resetAll(); closeModal(); });
+el('modal-close').addEventListener('click', closeModal);
+el('btn-submit').addEventListener('click', openResult);
+el('btn-review').addEventListener('click', () => {
+  // reveal all answers without ending
+  QUESTIONS.forEach((q, i) => {
+    state.answers[i] = state.answers[i] === null ? null : state.answers[i]; // no-op but ensures array length
+  });
+  // reveal current question answer
+  revealAnswer(state.index);
+});
+el('btn-help').addEventListener('click', ()=> {
+  alert('문제는 생태계 구조, 물질 순환, 보전, 영향 분석을 중점으로 합니다. 숫자 1–4로 선택 가능, 자동 다음 설정으로 빠르게 진행하세요.');
+});
+
+function closeModal(){ el('resultModal').classList.remove('show'); }
+
+// keyboard handlers
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') goNext();
+  if (e.key === 'ArrowLeft') goPrev();
+  if (['1','2','3','4'].includes(e.key)){
+    const idx = Number(e.key) - 1;
+    onSelect(state.index, idx);
+  }
+  if (e.key.toLowerCase() === 'r') resetAll();
+  if (e.key.toLowerCase() === 'v') openResult();
+});
+
+// timePerQ change
+el('timePerQ').addEventListener('change', resetTimerForQuestion);
+
+// --- reset ---
+function resetAll(){
+  state.index = 0;
+  state.answers = Array(QUESTIONS.length).fill(null);
+  state.score = 0;
+  recalcScore();
+  renderQuestion(state.index);
+  closeModal();
+}
+
+// initialize
+renderQuestion(state.index);
+focusFirstChoice();
+
+/* Accessibility: ensure focus outline visible */
+document.body.addEventListener('mousedown', ()=> document.body.classList.add('using-mouse'));
+</script>
+</body>
+</html>
